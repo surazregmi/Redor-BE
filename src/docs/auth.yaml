@@ -1,0 +1,47 @@
+# [POST] signup
+/auth/signup:
+    post:
+        tags:
+            - Auth
+        summary: Sign Up
+        requestBody:
+            description: Sign Up
+            required: true
+            content: 
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/signup'
+        responses: 
+            201:
+                description: 'OK'
+            400: 
+                description: 'Bad Request'
+            409: 
+                description: 'Conflict'
+            500:
+                description: 'Internal server error'
+
+# [POST] signin
+/auth/signin:
+    post:
+        tags:
+            - Auth
+        summary: Sign In
+        requestBody:
+            description: Sign In
+            required: true
+            content: 
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/signin'
+        responses: 
+            201:
+                description: 'OK'
+            400: 
+                description: 'Bad Request'
+            401:
+                description: 'Unauthorized'
+            409: 
+                description: 'Conflict'
+            500:
+                description: 'Internal server error'

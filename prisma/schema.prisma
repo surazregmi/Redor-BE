@@ -1,0 +1,235 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum SystemRole {
+  SUPER_ADMIN    // Can manage all tenants
+  TENANT_ADMIN   // Restaurant owner: full control within their tenant
+  STAFF          // Waiter/front-of-house: orders, reservations
+  KITCHEN        // Kitchen staff: see orders, manage stock
+}
+
+enum Plan {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+// ─────────────────────────────────────────────
+// TENANT
+// ─────────────────────────────────────────────
+model Tenant {
+  id           Int      @id @default(autoincrement())
+  name         String
+  slug         String   @unique          // URL-safe: "the-golden-fork"
+  logoUrl      String?
+  primaryColor String?  @default("#6366f1")
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  userTenantRoles UserTenantRole[]
+  plan            TenantPlan?
+  roles           Role[]
+  auditLogs       AuditLog[]
+
+  @@index([slug])
+  @@map("tenants")
+}
+
+// ─────────────────────────────────────────────
+// USER
+// Core identity — tenant-agnostic.
+// One user can belong to multiple tenants (e.g. a consultant).
+// ─────────────────────────────────────────────
+model User {
+  id             BigInt    @id @default(autoincrement())
+  email          String    @unique
+  passwordHash   String
+  firstName      String
+  lastName       String
+  avatarUrl      String?
+  isActive       Boolean   @default(true)
+  emailVerified  Boolean   @default(false)
+  lastLoginAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  userTenantRoles UserTenantRole[]
+  refreshTokens   RefreshToken[]
+  auditLogs       AuditLog[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model Role {
+  id          Int      @id @default(autoincrement())
+  tenantId    Int?                                   // null = global system role (SUPER_ADMIN)
+  name        String                                 // "TENANT_ADMIN", "KITCHEN", or custom "Head Chef"
+  description String?
+  isSystem    Boolean  @default(false)              // system roles cannot be deleted
+  createdAt   DateTime @default(now())
+
+  // Relations
+  tenant          Tenant?          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userTenantRoles UserTenantRole[]
+  permissions     RolePermission[]
+
+  @@unique([tenantId, name])  // role names unique per tenant
+  @@index([tenantId])
+  @@map("roles")
+}
+
+// ─────────────────────────────────────────────
+// PERMISSION
+// Fine-grained resource:action pairs.
+// Seeded at startup — not user-editable.
+// Examples:
+//   menu:read, menu:write, menu:delete
+//   orders:read, orders:update_status
+//   tables:manage, reservations:manage
+//   stock:read, stock:write
+//   users:invite, users:manage
+// ─────────────────────────────────────────────
+
+model Permission {
+  id          Int    @id @default(autoincrement())
+  resource    String                    // "menu", "orders", "tables", "stock", "users"
+  action      String                    // "read", "write", "delete", "manage"
+  description String?
+
+  rolePermissions RolePermission[]
+
+  @@unique([resource, action])
+  @@map("permissions")
+}
+
+// ─────────────────────────────────────────────
+// USER TENANT ROLE  (junction: User ↔ Tenant ↔ Role)
+// The key multitenant table. A user can have:
+//   - Different roles in different tenants
+//   - Multiple roles within the same tenant
+// ─────────────────────────────────────────────
+
+model UserTenantRole {
+  id         Int      @id @default(autoincrement())
+  userId     BigInt
+  tenantId   Int
+  roleId     Int
+  assignedAt DateTime @default(now())
+  assignedBy BigInt?                               // userId of the admin who granted this
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tenantId, roleId])   // no duplicate assignments
+  @@index([userId, tenantId])            // fast: "what roles does this user have in this tenant?"
+  @@index([tenantId])                    // fast: "who are all users in this tenant?"
+  @@map("user_tenant_roles")
+}
+
+// ─────────────────────────────────────────────
+// ROLE PERMISSION  (junction: Role ↔ Permission)
+// ─────────────────────────────────────────────
+
+model RolePermission {
+  id           Int @id @default(autoincrement())
+  roleId       Int
+  permissionId Int
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@map("role_permissions")
+}
+
+// ─────────────────────────────────────────────
+// REFRESH TOKEN
+// Stored server-side so we can revoke individual sessions
+// (e.g. logout from one device, or force-logout a user).
+// ─────────────────────────────────────────────
+
+model RefreshToken {
+  id         BigInt   @id @default(autoincrement())
+  userId     BigInt
+  token      String   @unique           // hashed SHA-256 of the actual token
+  deviceInfo String?                    // "Chrome on macOS", "iPhone Safari"
+  ipAddress  String?
+  isRevoked  Boolean  @default(false)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
+}
+
+// ─────────────────────────────────────────────
+// TENANT PLAN
+// Governs feature access. One active plan per tenant.
+// ─────────────────────────────────────────────
+
+model TenantPlan {
+  id         Int      @id @default(autoincrement())
+  tenantId   Int      @unique
+  plan       Plan     @default(FREE)
+  validUntil DateTime?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_plans")
+}
+
+// ─────────────────────────────────────────────
+// AUDIT LOG
+// Immutable record of every sensitive action.
+// Never deleted — archive to cold storage in production.
+// ─────────────────────────────────────────────
+
+model AuditLog {
+  id         BigInt   @id @default(autoincrement())
+  userId     BigInt?
+  tenantId   Int?
+  action     String                // "user.login", "role.assigned", "menu.deleted"
+  resource   String?               // "MenuItem", "Order"
+  resourceId String?               // the affected record's id
+  metadata   Json?                 // before/after state, error details, etc.
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])   // fast: audit trail for a tenant by date
+  @@index([userId])
+  @@index([action])
+  @@map("audit_logs")
+}

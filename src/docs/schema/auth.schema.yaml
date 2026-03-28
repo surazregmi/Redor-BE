@@ -1,0 +1,31 @@
+components: 
+    schemas:
+        signup:
+            type: object
+            required: 
+                - name
+                - email
+                - password
+            properties: 
+                name: 
+                    type: string
+                    example: Full Name                    
+                email:
+                    type: string
+                    example: email@example.com
+                password:
+                    type: string
+                    example: password
+
+        signin:
+            type: object
+            required:
+                - email
+                - password
+            properties:
+                email:
+                    type: string
+                    example: email@example.com
+                password:
+                    type: string
+                    example: password
