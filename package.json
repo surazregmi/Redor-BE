@@ -19,7 +19,11 @@
         "prisma:pull": "npx prisma db pull",
         "prisma:push": "npx prisma db push",
         "prisma:migrate:create": "npx prisma migrate dev --create-only",
-        "prisma:migrate:status": "npx prisma migrate status"
+        "prisma:migrate:status": "npx prisma migrate status",
+        "prisma:seed": "npx prisma db seed"
+    },
+    "prisma": {
+        "seed": "ts-node --transpile-only prisma/seed.ts"
     },
     "author": "Suraj",
     "license": "MIT",

@@ -7,16 +7,9 @@ export const getUserProfileController = async (
     next: NextFunction,
 ): Promise<void> => {
     try {
-        const authorization = req.headers.authorization;
-        if (!authorization) {
-            res.status(404).json({ message: 'User not found' });
-            return;
-        }
-
-        const accessToken = authorization.split(' ')[1];
-        const response = await getUserProfileService(accessToken);
-
-        res.status(200).json({ message: 'User data fetched', data: response });
+        // req.context is guaranteed by authMiddleware — safe to assert
+        const user = await getUserProfileService(req.context!.userId);
+        res.status(200).json({ message: 'User data fetched', data: user });
     } catch (error) {
         next(error);
     }

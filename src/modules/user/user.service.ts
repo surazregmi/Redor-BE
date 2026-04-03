@@ -1,20 +1,8 @@
 import { repo } from './user.repo';
 import { CustomError } from '@/utils/custom-error';
-import { verifyJWT } from '@/middlewares/jwt.service';
-import { JWT_ACCESS_TOKEN_SECRET } from '@/config';
 
-export const getUserProfileService = async (accessToken: string) => {
-    const decodeToken = await verifyJWT(
-        accessToken,
-        JWT_ACCESS_TOKEN_SECRET as string,
-    );
-
-    const userId = decodeToken.userId;
-
+export const getUserProfileService = async (userId: bigint) => {
     const user = await repo.getUserProfile(userId);
-    if (!user) {
-        throw new CustomError('User not found', 404);
-    }
-
+    if (!user) throw new CustomError('User not found', 404);
     return user;
 };
