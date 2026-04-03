@@ -16,11 +16,15 @@ datasource db {
 // ENUMS
 // ─────────────────────────────────────────────
 
+// Generic system roles — not product-specific.
+// Product-specific roles (e.g. "Kitchen Staff", "Waiter") are created
+// as custom roles per tenant by the ADMIN via the roles API.
 enum SystemRole {
-  SUPER_ADMIN    // Can manage all tenants
-  TENANT_ADMIN   // Restaurant owner: full control within their tenant
-  STAFF          // Waiter/front-of-house: orders, reservations
-  KITCHEN        // Kitchen staff: see orders, manage stock
+  SUPER_ADMIN  // Platform owner — cross-tenant, full access to everything
+  ADMIN        // Tenant owner — full control within their tenant
+  MANAGER      // Operational lead — manages people and operations, not billing/settings
+  MEMBER       // Regular user — day-to-day operational access
+  VIEWER       // Read-only — auditors, external reviewers, silent observers
 }
 
 enum Plan {

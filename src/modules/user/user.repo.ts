@@ -1,11 +1,13 @@
 import prisma from '@/config/prisma';
-import { User } from '@prisma/client'; // Generated types
+import type { User } from '../../../node_modules/.prisma/client/index';
+
+type SafeUser = Omit<User, 'passwordHash'>;
 
 export const repo = {
-    getUserProfile: async (
-        userId: number | undefined,
-    ): Promise<User | null> => {
-        if (!userId) return null;
-        return await prisma.user.findUnique({ where: { id: userId } });
+    getUserProfile: async (userId: bigint): Promise<SafeUser | null> => {
+        return prisma.user.findUnique({
+            where: { id: userId },
+            omit: { passwordHash: true },
+        });
     },
 };

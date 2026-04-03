@@ -1,7 +1,7 @@
-import { JwtPayload } from 'jsonwebtoken';
+import { AuthContext } from '../auth.types';
 
 declare module 'express-serve-static-core' {
     interface Request {
-        context?: JwtPayload;
+        context?: AuthContext;
     }
 }

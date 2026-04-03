@@ -7,6 +7,9 @@ config({ path: `.env.${process.env.NODE_ENV || 'development'}` });
 
 export default defineConfig({
     schema: path.join('prisma', 'schema.prisma'),
+    migrations: {
+        seed: 'ts-node --transpile-only prisma/seed.ts',
+    },
     datasource: {
         // Direct connection (port 5432) — bypasses PgBouncer, required for migrate
         url: process.env.DIRECT_URL,
