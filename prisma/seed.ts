@@ -97,6 +97,7 @@ const PERMISSIONS: PermissionDef[] = [
     { resource: 'stock', action: 'manage', description: 'Full stock management including alerts' },
 
     // ── Users ─────────────────────────────────────────────────────
+    { resource: 'users', action: 'create',   description: 'Create team members' },
     { resource: 'users', action: 'read',   description: 'View team members' },
     { resource: 'users', action: 'invite', description: 'Invite new staff members' },
     { resource: 'users', action: 'manage', description: 'Manage team (activate, deactivate, change roles)' },
@@ -114,6 +115,7 @@ const PERMISSIONS: PermissionDef[] = [
 
     // ── Permissions (platform-level — Super Admin only) ───────────
     { resource: 'permissions', action: 'manage', description: 'Add or remove permissions from the catalog (Super Admin only)' },
+    { resource: 'tenants', action: 'create', description: 'Add or remove permissions from the catalog (Super Admin only)' },
 ];
 
 // ─────────────────────────────────────────────────────────────────

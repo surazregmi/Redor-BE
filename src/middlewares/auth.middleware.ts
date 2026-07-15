@@ -31,6 +31,8 @@ export const authMiddleware = async (
             permissions: payload.permissions,
         };
 
+      
+
         next();
     } catch (error) {
         next(error);

@@ -69,7 +69,7 @@ appServer.use('/api', router);
 appServer.use(errorHandler);
 
 appServer.all('*', (req, res) => {
-    res.status(404).json({ message: 'Sorry! Page not found' });
+    res.status(404).json({ statusCode: 404, message: 'Sorry! Page not found' });
 });
 
 // Start the server after ensuring database connection

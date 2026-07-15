@@ -15,9 +15,10 @@ const stripPasswordHash = (user: User): SafeUser => {
     return safe;
 };
 
+// dont expose on frontend , create it with api, creation of tenant admin
 export const ownerSignUpService = async (dto: OwnerSignUpDto) => {
     const { error } = validateOwnerSignUp(dto);
-    if (error) throw new CustomError(error.details[0].message, 400);
+    if (error) throw new CustomError('Validation failed', 400, error.details.map((d) => d.message));
 
     const existing = await repo.findUserByEmail(dto.email);
     if (existing) throw new CustomError(`Email ${dto.email} already exists`, 409);
@@ -48,7 +49,7 @@ export const signInService = async (
     meta: { ipAddress?: string; deviceInfo?: string },
 ) => {
     const { error } = validateSignIn(dto);
-    if (error) throw new CustomError(error.details[0].message, 400);
+    if (error) throw new CustomError('Validation failed', 400, error.details.map((d) => d.message));
 
     const user = await repo.findUserByEmail(dto.email);
     // Same message for both cases — prevents user enumeration
@@ -112,7 +113,7 @@ export const signInService = async (
 
 export const refreshTokenService = async (dto: RefreshDto) => {
     const { error } = validateRefresh(dto);
-    if (error) throw new CustomError(error.details[0].message, 400);
+    if (error) throw new CustomError('Validation failed', 400, error.details.map((d) => d.message));
 
     const tokenHash = sha256(dto.refreshToken);
     const stored = await repo.findRefreshToken(tokenHash);
@@ -155,7 +156,7 @@ export const refreshTokenService = async (dto: RefreshDto) => {
 
 export const signOutService = async (dto: RefreshDto) => {
     const { error } = validateRefresh(dto);
-    if (error) throw new CustomError(error.details[0].message, 400);
+    if (error) throw new CustomError('Validation failed', 400, error.details.map((d) => d.message));
 
     const tokenHash = sha256(dto.refreshToken);
     const stored = await repo.findRefreshToken(tokenHash);

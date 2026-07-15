@@ -75,12 +75,18 @@ model User {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
+  // Who created this user (null = seeded / self-registered before this feature)
+  createdById    BigInt?
+  createdBy      User?     @relation("UserCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdUsers   User[]    @relation("UserCreatedBy")
+
   // Relations
   userTenantRoles UserTenantRole[]
   refreshTokens   RefreshToken[]
   auditLogs       AuditLog[]
 
   @@index([email])
+  @@index([createdById])
   @@map("users")
 }
 

@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { JwtAccessPayload } from '@/types/auth.types';
+import { CustomError } from '@/utils/custom-error';
 
 export const generateJWT = (
     payload: JwtAccessPayload,
@@ -22,6 +23,9 @@ export const verifyJWT = async (
 
         return data as JwtAccessPayload;
     } catch (error: any) {
-        throw new Error(error.message);
+        if (error.name === 'TokenExpiredError') {
+            throw new CustomError('Token has expired', 401);
+        }
+        throw new CustomError('Invalid token', 401);
     }
 };

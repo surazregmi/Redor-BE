@@ -32,3 +32,18 @@ export interface SignInDto {
 export interface RefreshDto {
     refreshToken: string;
 }
+
+export interface CreateUserDto {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    tenantId?: number; // SUPER_ADMIN provides this; ADMIN uses context.tenantId
+    roleId: number;
+}
+
+export interface ListUsersQuery {
+    page?: number;     // default 1
+    limit?: number;    // default 20, max 100
+    isActive?: boolean; // default: undefined (return all)
+}
